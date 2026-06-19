@@ -28,6 +28,12 @@ def cmd_train(args: argparse.Namespace) -> None:
     case "enwik8-iter-curriculum":
       from mandorla.train.enwik8_iter_curriculum import TrainConfig
       from mandorla.train.enwik8_iter_curriculum import main as run
+    case "enwik8-iter-curriculum-large":
+      from mandorla.train.enwik8_iter_curriculum_large import TrainConfig
+      from mandorla.train.enwik8_iter_curriculum_large import main as run
+    case "enwik8-iter-curriculum-loop":
+      from mandorla.train.enwik8_iter_curriculum_loop import TrainConfig
+      from mandorla.train.enwik8_iter_curriculum_loop import main as run
     case _:
       raise ValueError(f"unknown dataset: {args.dataset}")
 
@@ -44,7 +50,13 @@ def build_parser() -> argparse.ArgumentParser:
   sub.add_parser("info", help="print environment info")
 
   train = sub.add_parser("train", help="train a model")
-  train.add_argument("dataset", choices=["enwik8", "enwik8-iter", "enwik8-iter-curriculum"], help="which variant to train")
+  train.add_argument("dataset", choices=[
+    "enwik8",
+    "enwik8-iter",
+    "enwik8-iter-curriculum",
+    "enwik8-iter-curriculum-large",
+    "enwik8-iter-curriculum-loop"
+  ], help="which variant to train")
   train.add_argument("--total-steps", type=int, help="total training steps (flat only)")
   train.add_argument("--steps-per-phase", type=int, help="steps per layer (iter only)")
   train.add_argument("--batch-size", type=int, help="batch size")
