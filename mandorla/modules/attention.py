@@ -65,12 +65,7 @@ class Attention(nn.Module):
     if self._block_mask is None or self._block_mask.shape[-1] != d_seq:
       self._block_mask = create_causal_block_mask(d_seq)
 
-    if x.device.type == "cuda":
-      if self._block_mask is None or self._block_mask.shape[-1] != d_seq:
-        self._block_mask = create_causal_block_mask(d_seq)
-      out = flex_attn(q, k, v, block_mask=self._block_mask)
-    else:
-      out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
+    out = F.scaled_dot_product_attention(q, k, v, is_causal=True)
 
     out = rearrange(out, "b h s d -> b s (h d)")
 
