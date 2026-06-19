@@ -51,7 +51,6 @@ class TrainConfig:
   forward_dtype: str = "bf16"
 
   # curriculum
-  tokens_per_param: float = 5.0
   curriculum_alpha: float = 0.7
 
   print_every: int = 100
