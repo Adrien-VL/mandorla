@@ -116,10 +116,16 @@ def get_batch(
   seq_len: int,
   batch_size: int,
   device: str,
-) -> tuple[Tensor, Tensor]:
-  """Sample a batch from the chunks unlocked at the current phase."""
+  return_ids: bool = False,
+) -> tuple[Tensor, Tensor] | tuple[Tensor, Tensor, np.ndarray]:
+  """Sample a batch from the chunks unlocked at the current phase.
+  If return_ids=True, also returns the chunk indices used (for bucket assignment)."""
   ids = available_chunks[np.random.randint(0, len(available_chunks), size=batch_size)]
   starts = torch.from_numpy(ids).long() * seq_len
   x = torch.stack([data[s : s + seq_len] for s in starts])
   y = torch.stack([data[s + 1 : s + seq_len + 1] for s in starts])
-  return x.to(device, non_blocking=True), y.to(device, non_blocking=True)
+  x = x.to(device, non_blocking=True)
+  y = y.to(device, non_blocking=True)
+  if return_ids:
+    return x, y, ids
+  return x, y
