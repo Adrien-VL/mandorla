@@ -1,0 +1,237 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{parskip}
+
+\title{Three Insights Toward a Theory of \\ Compositional Generalization in Learned Systems}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This note summarizes three connected insights toward a unified account of representation,
+generalization, and inductive bias in learned systems. The first frames data as a
+\emph{holonarchic} structure whose elements have a \emph{dispositional} character,
+operationalized through conditional Kolmogorov complexity expressed as a function of
+representational radius. The second derives from this a procedure for \emph{mapping the
+frontier of known observations} and \emph{estimating the location of novel ones} via
+threshold-based reconstruction and recursive association decomposition. The third is a
+phenomenological critique of the smoothness priors that dominate current regularization
+practice, arguing that they may reflect anthropic biases about cause and effect rather
+than properties of the data manifold itself.
+\end{abstract}
+
+\section{Holonarchy and Dispositional K-Complexity}
+
+A data distribution $D$ is treated not as a flat set of points but as a
+\emph{holonarchic} structure: a hierarchy in which each element is simultaneously a whole
+(with internal compositional structure) and a part (entering as a component of larger
+wholes). Under this view, an observation $x$ is not adequately characterized by its
+features alone --- it is characterized by its \emph{dispositions}: the set of
+compositional roles it can play across levels of the hierarchy.
+
+We make this precise through conditional Kolmogorov complexity. Define
+\[
+  K(x \mid D, r) \;\;=\;\; \text{minimal description length of } x \text{ given the
+  subset of } D \text{ within representational radius } r \text{ of } x.
+\]
+The function $r \mapsto K(x \mid D, r)$ is the \emph{dispositional curve} of $x$. Its
+shape encodes how the explanatory burden of $x$ shifts as the conditioning neighbourhood
+grows. Three regimes are notable:
+
+\begin{itemize}
+  \item For small $r$, $K(x \mid D, r)$ is large: the local neighbourhood is too small
+        to compress $x$ effectively.
+  \item For intermediate $r$, $K(x \mid D, r)$ drops sharply at the radius at which
+        $x$'s compositional structure becomes specifiable in terms of nearby holons.
+  \item For large $r$, $K(x \mid D, r)$ asymptotes to a floor set by the prior
+        complexity of the full data distribution.
+\end{itemize}
+
+The position of the inflection encodes the level of the holonarchy at which $x$ is most
+naturally described. The disposition of $x$ is the integral of associations that become
+available as $r$ grows past this inflection.
+
+\section{Frontier Mapping and Generative Estimation via Two Thresholds}
+
+The dispositional view suggests an operational procedure for characterising any
+observation: identify two critical thresholds in a noise- or perturbation-conditioned
+reconstruction process.
+
+Let $\tilde{x}_t$ be a perturbed version of $x$ at noise level $t \in [0, T]$, and let
+$\hat{x}_t$ denote the reconstruction by a model conditioned on $D$. Define:
+
+\begin{itemize}
+  \item $T_1(x)$: the smallest $t$ at which $x$-specific reconstruction fails ---
+        i.e.\ the noise level at which the model can no longer recover the specific
+        instance $x$ and must hedge across nearby holons. This marks the
+        \emph{instance-to-class transition}.
+  \item $T_2(x)$: the smallest $t \geq T_1(x)$ at which the reconstruction collapses to
+        the unconditional prior of $D$. This marks the \emph{class-to-prior transition}.
+\end{itemize}
+
+From these we derive two quantities of interest:
+
+\[
+  \text{Novelty}(x) \;=\; T_2(x) - T_1(x), \qquad
+  \text{Associativity}(x) \;=\; T_2(x).
+\]
+
+Novelty measures the width of the regime in which $x$ retains class-level identity
+without being fully specified --- the size of the compositional ``neighbourhood'' it
+governs. Associativity measures how deeply $x$ is anchored in the data manifold before
+the reconstruction loses all conditional information.
+
+These two scalars define a coordinate system on the data: every observation maps to a
+point in the $(T_1, T_2)$ plane. The frontier of known observations is the boundary in
+this plane beyond which no training data lies, and the estimated location of a new
+observation can be obtained by:
+
+\begin{enumerate}
+  \item Computing its $(T_1, T_2)$ coordinates from the reconstruction process.
+  \item Identifying the nearest known holonarchic region in this plane.
+  \item \textbf{Recursively decomposing} the associations active at $T_2$ ---
+        i.e.\ examining which subsets of $D$ remain influential at the class-to-prior
+        boundary, and applying the same threshold procedure to each subset.
+\end{enumerate}
+
+This recursion is the \emph{association deconstruction} step: by repeatedly applying the
+two-threshold scoring to progressively smaller and more specialized subsets, we descend
+the holonarchic hierarchy and obtain a multi-resolution characterization of $x$ in
+terms of compositional dependencies on $D$. The scoring is not on $x$ in isolation but
+on \emph{which hierarchical decompositions remain consistent} with $x$ across levels.
+This is what should be scored: not features, not reconstructions, but the structure of
+the hierarchy of associations that survive perturbation.
+
+\section{A Phenomenological Critique of Smoothness Priors}
+
+The dominant regularization practices in deep learning --- dropout, $L_2$ weight decay,
+input noise --- share a common implicit assumption: that the function spaces we wish to
+learn are \emph{smooth}, in the sense that small perturbations to inputs or weights
+correspond to small changes in output. This assumption is so deeply embedded that it is
+often not recognized as an assumption at all.
+
+We argue that this commitment is not metaphysically necessary but reflects the
+phenomenological structure of human cognition. The way humans perceive and interact with
+reality --- the categories of cause and effect, the expectation of continuous response,
+the framing of events as smoothly unfolding in time --- biases scientific and
+mathematical formalization toward smooth solution spaces. The smoothness prior is in
+this sense an \emph{anthropic projection}: it describes the kinds of regularities that
+human cognition is equipped to perceive and act upon, not necessarily the structure of
+the data manifold itself.
+
+This critique opens a question about what alternative priors are available. Sparsity
+priors (in the Kolmogorov/Occam sense) commit to a different assumption: that good
+explanations admit compact compositional descriptions, but make no commitment to
+continuity. Compositional priors --- such as the holonarchic structure described in
+Section~1 --- commit to a third position: that good explanations decompose into typed
+hierarchical associations whose admissible compositions are constrained but not
+necessarily smooth. The threshold-based scoring of Section~2 is compatible with
+compositional priors without requiring smoothness.
+
+The practical consequence is that regularization should not be chosen by default but
+by commitment to a theory of what regularities the system is meant to discover. If the
+target is compositional generalization across a holonarchic structure, the regularizer
+should constrain admissible compositions, not penalize discontinuity.
+
+\section*{Synthesis}
+
+The three insights form a single argument. Holonarchic structure and dispositional
+K-complexity (Section~1) provide an ontology of what data \emph{is}; threshold-based
+reconstruction and recursive association decomposition (Section~2) provide an
+epistemology of how to characterize and place observations within that ontology; and the
+phenomenological critique (Section~3) clears the ground of inherited regularization
+commitments that may be incompatible with both. Together they sketch a research program
+in which the choice of inductive bias is itself a theoretical commitment about the
+nature of compositional generalization, rather than a hyperparameter to be tuned.
+
+\section{Paper Outline (Placeholder)}
+
+This appendix sketches the planned structure of the full paper and the experimental
+program that operationalizes the three insights above. All architectural variants will
+be reported at a common parameter budget (target: $\approx 50$M) so that comparisons
+isolate the effect of inductive bias rather than capacity.
+
+\subsection*{Planned Sections}
+
+\begin{enumerate}
+  \item \textbf{Introduction.} Motivate compositional generalization as the central
+        problem and position the paper's contribution as an examination of inductive
+        bias rather than scaling.
+  \item \textbf{Theoretical motivation.} The three insights of this document, expanded
+        with formal definitions of $K(x \mid D, r)$, the two-threshold reconstruction
+        scoring, and the phenomenological critique.
+  \item \textbf{Methods.} The architectural progression and training schemes:
+        \begin{enumerate}
+          \item Flat baseline transformer (AdamW, no curriculum).
+          \item Iterative depth-growth training (iter scheme).
+          \item Iterative + data curriculum (difficulty-ranked exposure).
+          \item Iterative + curriculum + decaying intra-layer loops with horizon-1
+                BPTT and PCGrad over loop losses (\emph{loopy iter}).
+          \item Sparsity-prior post-training: iterative magnitude- or activation-based
+                sparsification of the trained dense model, schedule-tuned until the
+                train--validation gap reaches a target.
+          \item Holonarchic-prior architecture (\emph{diamond}): branch
+                specialization with direction-in-representation-space assignment and
+                radius-as-depth structure, instantiating the holonarchic ontology of
+                Section~1.
+        \end{enumerate}
+  \item \textbf{Experiments.} Common-budget comparison across all variants on byte-level
+        \texttt{enwik8}, reported as bits-per-byte (bpb) on the held-out set, with
+        train--val gap reported alongside.
+  \item \textbf{Catastrophic-forgetting study.} A targeted experiment to demonstrate
+        the practical value of the holonarchic prior: post-training fine-tuning of a
+        single semantic branch (e.g.\ a mathematics branch) of the diamond model and
+        measurement of performance preservation on unrelated branches, compared
+        against the same fine-tuning applied to a flat baseline of equal parameter
+        count. The prediction is that the diamond confines fine-tuning updates to the
+        targeted branch and the shared prefix layers, yielding substantially lower
+        degradation on distant capabilities.
+  \item \textbf{Discussion.} What the comparison reveals about the relative merits of
+        sparsity priors versus compositional/holonarchic priors, and what the
+        catastrophic-forgetting result implies for modular post-training.
+  \item \textbf{Conclusion.}
+\end{enumerate}
+
+\subsection*{Model Variants}
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Variant} & \textbf{Inductive bias} & \textbf{Status} \\
+\hline
+Flat baseline (AdamW)           & none (control)                 & trained (small) \\
+Iter                            & depth curriculum               & trained \\
+Iter + data curriculum          & depth + difficulty curriculum  & trained \\
+Iter + curriculum + loops       & + intra-layer recurrence       & implemented \\
+Sparsity-pruned (TurboSparse)   & sparsity prior                 & planned \\
+Diamond                         & holonarchic prior              & planned \\
+Diamond + branch fine-tune      & forgetting resistance test     & planned \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection*{Key Empirical Claims to Be Tested}
+
+\begin{itemize}
+  \item Iterative depth-growth with data curriculum converges faster per training step
+        than a matched-capacity flat baseline and reaches comparable bpb.
+  \item Sparsity-prior post-training reduces the train--val gap without recourse to
+        smoothness-based regularizers, providing an empirical test of the
+        phenomenological argument of Section~3.
+  \item The diamond architecture achieves bpb competitive with flat baselines at equal
+        parameter count, demonstrating that the holonarchic inductive bias is not
+        prohibitively expensive.
+  \item Branch-localized fine-tuning of the diamond preserves capabilities on distant
+        branches substantially better than equivalent fine-tuning of a flat model.
+        This is the headline result that links the theoretical claims of
+        Sections~1--3 to a measurable practical property.
+\end{itemize}
+
+\end{document}
