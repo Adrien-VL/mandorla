@@ -18,24 +18,14 @@ def cmd_info() -> None:
 
 
 def cmd_train(args: argparse.Namespace) -> None:
-  match args.dataset:
-    case "enwik8":
-      from mandorla.train.enwik8 import TrainConfig
-      from mandorla.train.enwik8 import main as run
-    case "enwik8-iter":
-      from mandorla.train.enwik8_iter import TrainConfig
-      from mandorla.train.enwik8_iter import main as run
-    case "enwik8-iter-curriculum":
-      from mandorla.train.enwik8_iter_curriculum import TrainConfig
-      from mandorla.train.enwik8_iter_curriculum import main as run
-    case "enwik8-iter-curriculum-large":
-      from mandorla.train.enwik8_iter_curriculum_large import TrainConfig
-      from mandorla.train.enwik8_iter_curriculum_large import main as run
-    case "enwik8-iter-curriculum-loop":
-      from mandorla.train.enwik8_iter_curriculum_loop import TrainConfig
-      from mandorla.train.enwik8_iter_curriculum_loop import main as run
-    case _:
-      raise ValueError(f"unknown dataset: {args.dataset}")
+  if args.dataset == "enwik8":
+    from mandorla.train.enwik8 import TrainConfig
+    from mandorla.train.enwik8 import main as run
+  elif args.dataset == "enwik8-sparsify":
+    from mandorla.train.sparsify import TrainConfig
+    from mandorla.train.sparsify import main as run
+  else:
+    raise ValueError(f"unknown dataset: {args.dataset}")
 
   cfg = TrainConfig()
   field_names = {f.name for f in fields(cfg)}
@@ -50,31 +40,50 @@ def build_parser() -> argparse.ArgumentParser:
   sub.add_parser("info", help="print environment info")
 
   train = sub.add_parser("train", help="train a model")
-  train.add_argument("dataset", choices=[
-    "enwik8",
-    "enwik8-iter",
-    "enwik8-iter-curriculum",
-    "enwik8-iter-curriculum-large",
-    "enwik8-iter-curriculum-loop"
-  ], help="which variant to train")
-  train.add_argument("--total-steps", type=int, help="total training steps (flat only)")
-  train.add_argument("--steps-per-phase", type=int, help="steps per layer (iter only)")
-  train.add_argument("--batch-size", type=int, help="batch size")
-  train.add_argument("--lr", type=float, help="peak learning rate")
-  train.add_argument("--seed", type=int, help="random seed")
-  train.add_argument("--resume", type=str, help="path to checkpoint to resume from")
-  train.add_argument("--out-dir", type=str, help="where to save checkpoints/dashboard")
+  train.add_argument("dataset", choices=["enwik8", "enwik8-sparsify"])
+
+  # Mode toggles (boolean: --use-iter / --no-use-iter, etc.)
+  for flag in ["use-iter", "use-curriculum", "use-loops", "use-bucket-reweighting", "use-pcgrad"]:
+    train.add_argument(f"--{flag}", action=argparse.BooleanOptionalAction, default=None,
+                       dest=flag.replace("-", "_"))
+
+  # Model
+  train.add_argument("--n-layers", type=int, dest="n_layers")
+  train.add_argument("--n-heads", type=int, dest="n_heads")
+  train.add_argument("--d-model", type=int, dest="d_model")
+  train.add_argument("--d-head", type=int, dest="d_head")
+  train.add_argument("--d-inner", type=int, dest="d_inner")
+  train.add_argument("--max-seq-len", type=int, dest="max_seq_len")
+
+  # Training
+  train.add_argument("--steps-per-phase", type=int, dest="steps_per_phase")
+  train.add_argument("--batch-size", type=int, dest="batch_size")
+  train.add_argument("--seq-len", type=int, dest="seq_len")
+  train.add_argument("--lr", type=float)
+  train.add_argument("--weight-decay", type=float, dest="weight_decay")
+  train.add_argument("--seed", type=int)
+  train.add_argument("--resume", type=str)
+  train.add_argument("--out-dir", type=str, dest="out_dir")
+
+  # Looping
+  train.add_argument("--max-loops", type=int, dest="max_loops")
+  train.add_argument("--first-loop-weight", type=float, dest="first_loop_weight")
+  train.add_argument("--lambda-mono", type=float, dest="lambda_mono")
+
+  # Sparsify
+  train.add_argument("--checkpoint", type=str)
+  train.add_argument("--schedule", type=str, choices=["uniform", "ascending", "descending"])
+  train.add_argument("--sparsity-max", type=float, dest="sparsity_max")
 
   return parser
 
 
 def main() -> None:
   args = build_parser().parse_args()
-  match args.command:
-    case "info":
-      cmd_info()
-    case "train":
-      cmd_train(args)
+  if args.command == "info":
+    cmd_info()
+  elif args.command == "train":
+    cmd_train(args)
 
 
 if __name__ == "__main__":
